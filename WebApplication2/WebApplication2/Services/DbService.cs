@@ -1,6 +1,7 @@
 using System.Formats.Asn1;
 using Microsoft.EntityFrameworkCore;
 using WebApplication2.Data;
+using WebApplication2.DTOs;
 using WebApplication2.Models;
 
 namespace WebApplication2.Services;
@@ -15,7 +16,7 @@ public class DbService : IDbService
 
     public async Task<ICollection<Patient>> GetPatientData(int idPatient)
     {
-        if (!await (DoesPatientExist(idPatient)))
+        if (!await (DoesPatientExistByID(idPatient)))
         {
             throw new AsnContentException("Not Found Patient");
             
@@ -37,12 +38,37 @@ public class DbService : IDbService
         return await _context.Medicaments.FirstOrDefaultAsync(e => e.IdMedicament == idMedicament);
     }
 
+    public async Task AddNewPatient(Patient patient)
+    {
+        await _context.AddAsync(patient);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<Prescription> AddNewPrescription(Prescription prescription)
+    {
+        await _context.AddAsync(prescription);
+        await _context.SaveChangesAsync();
+        return prescription;
+    }
+
+    public async Task AddNewPrescriptionMedicament(List<PrescriptionMedicament> prescriptionMedicaments)
+    {
+        await _context.AddRangeAsync(prescriptionMedicaments);
+        await _context.SaveChangesAsync();
+    }
 
 
-    public async Task<bool> DoesPatientExist(int idPatient)
+    public async Task<bool> DoesPatientExistByID(int idPatient)
     {
         return await _context.Patients.AnyAsync(e => e.IdPatient == idPatient);
     }
+
+
+    public async Task<bool> DoesPatientExist(Patient patient)
+    {
+        return await _context.Patients.AnyAsync(e => e.IdPatient == patient.IdPatient && e.FirstName == patient.FirstName && e.LastName == patient.LastName && e.Birthdate == patient.Birthdate);
+    }
+    
 
     public async Task<bool> DoesDoctorExist(int idDoctor)
     {
